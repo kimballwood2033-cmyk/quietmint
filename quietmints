@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiet Mint | Your Financial Sanctuary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Instrument+Serif:italic&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F5FAF8; transition: all 0.5s ease; }
+        .serif { font-family: 'Instrument Serif', serif; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.4); }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const App = () => {
+            // --- STATE MANAGEMENT ---
+            const [step, setStep] = useState(0); // 0-3: Onboarding, 4: Main App
+            const [data, setData] = useState({
+                balance: '',
+                income: '',
+                goalName: '',
+                monthlyGoal: '',
+                spentToday: 0
+            });
+            const [isLoaded, setIsLoaded] = useState(false);
+
+            // Load saved data if it exists
+            useEffect(() => {
+                const saved = localStorage.getItem('quietMintData');
+                if (saved) {
+                    setData(JSON.parse(saved));
+                    setStep(4);
+                }
+                setIsLoaded(true);
+            }, []);
+
+            // Save data whenever it changes
+            useEffect(() => {
+                if (step === 4) {
+                    localStorage.setItem('quietMintData', JSON.stringify(data));
+                }
+            }, [data, step]);
+
+            const nextStep = () => setStep(step + 1);
+            
+            const calculateSafeToSpend = () => {
+                // Calculation: (Current Balance - Monthly Goal Contribution) / Days Left in Month
+                // Simplified for the demo to show immediate daily safe spend
+                const monthlyAvailable = parseFloat(data.balance) - parseFloat(data.monthlyGoal || 0);
+                return (monthlyAvailable / 30).toFixed(2);
+            };
+
+            // --- ONBOARDING SCREENS ---
+            if (step < 4) {
+                const questions = [
+                    { label: "Current Balance", key: "balance", q: "How much money is in your account today?", placeholder: "0.00", type: "number" },
+                    { label: "Monthly Income", key: "income", q: "What is your total monthly income?", placeholder: "0.00", type: "number" },
+                    { label: "The Dream", key: "goalName", q: "What are you saving for? (e.g. Tokyo)", placeholder: "Destination...", type: "text" },
+                    { label: "Monthly Goal", key: "monthlyGoal", q: "How much per month should I tuck away?", placeholder: "0.00", type: "number" }
+                ];
+
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-6 text-[#1A2E26]">
+                        <div className="max-w-md w-full bg-white p-10 rounded-[3rem] shadow-xl border border-[#DCE8E2]">
+                            <p className="text-[10px] tracking-[.3em] font-bold opacity-30 uppercase mb-2">Step {step + 1} of 4</p>
+                            <h2 className="text-3xl serif italic mb-8 leading-tight">{questions[step].q}</h2>
+                            <input 
+                                autoFocus
+                                type={questions[step].type}
+                                placeholder={questions[step].placeholder}
+                                className="w-full text-4xl font-light border-b-2 border-[#B4E8D1] focus:border-[#2D4F44] outline-none pb-2 transition-colors bg-transparent"
+                                value={data[questions[step].key]}
+                                onChange={(e) => setData({...data, [questions[step].key]: e.target.value})}
+                                onKeyPress={(e) => e.key === 'Enter' && nextStep()}
+                            />
+                            <button 
+                                onClick={nextStep}
+                                className="mt-12 w-full bg-[#2D4F44] text-white py-4 rounded-full font-bold hover:bg-black transition-all"
+                            >
+                                CONTINUE
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            // --- MAIN FUNCTIONAL APP ---
+            return (
+                <div className="min-h-screen p-6 md:p-12 text-[#1A2E26] max-w-2xl mx-auto pb-32">
+                    <header className="flex justify-between items-start mb-12">
+                        <div>
+                            <p className="text-[10px] tracking-[0.3em] font-bold opacity-40 uppercase">Sanctuary Mode</p>
+                            <h1 className="text-3xl serif italic">Quiet Mint</h1>
+                        </div>
+                        <button 
+                            onClick={() => {localStorage.clear(); window.location.reload();}}
+                            className="text-[10px] opacity-30 hover:opacity-100 font-bold underline"
+                        >
+                            RESET DATA
+                        </button>
+                    </header>
+
+                    {/* The Whisper AI */}
+                    <div className="bg-[#2D4F44] text-[#F5FAF8] p-8 rounded-[2.5rem] shadow-2xl mb-12 relative overflow-hidden">
+                        <p className="text-[10px] tracking-widest opacity-50 mb-4 uppercase">The Whisper Intelligence</p>
+                        <p className="text-xl font-light leading-relaxed">
+                            "I've analyzed your {data.goalName} goal. By tucking away <span className="text-[#98FFD9] font-medium">${data.monthlyGoal}</span> this month, 
+                            you're staying perfectly on track. I've adjusted your daily limit so you can focus on living."
+                        </p>
+                    </div>
+
+                    {/* Main Number Section */}
+                    <div className="text-center mb-16">
+                        <p className="text-[10px] tracking-[0.4em] opacity-40 uppercase mb-2">Safe to Spend Daily</p>
+                        <h2 className="text-8xl serif italic tracking-tighter">
+                            ${calculateSafeToSpend()}
+                        </h2>
+                        <p className="text-xs opacity-40 mt-4 italic">Updated in real-time based on your goals.</p>
+                    </div>
+
+                    {/* Transaction Simulation */}
+                    <div className="space-y-4">
+                        <h3 className="text-[10px] font-bold tracking-widest opacity-30 uppercase ml-2 underline underline-offset-8 decoration-[#B4E8D1]">Bespoke Insights</h3>
+                        <div className="glass p-6 rounded-[2rem] flex justify-between items-center shadow-sm">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-[#B4E8D1] rounded-2xl flex items-center justify-center text-xl">🏠</div>
+                                <div>
+                                    <h4 className="font-bold text-sm">Monthly Sweep</h4>
+                                    <p className="text-[10px] opacity-40">AUTOMATED GOAL FUNDING</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="font-bold text-[#81C784]">-${data.monthlyGoal}</p>
+                                <p className="text-[9px] font-bold opacity-40 italic font-bold">SECURED</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Navigation / Goal Bar */}
+                    <div className="fixed bottom-10 left-6 right-6 max-w-md mx-auto glass p-5 rounded-[2.5rem] flex items-center justify-between px-8 shadow-2xl">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] opacity-40 uppercase font-bold tracking-widest">Saving For</span>
+                            <span className="text-sm font-bold tracking-tighter">{data.goalName.toUpperCase()}</span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                             <div className="w-32 bg-[#DCE8E2] h-1.5 rounded-full overflow-hidden mb-1">
+                                <div className="bg-[#2D4F44] h-full w-[45%] animate-pulse"></div>
+                            </div>
+                            <span className="text-[9px] font-bold opacity-40">AUTO-SWEEP ACTIVE</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
